@@ -6,7 +6,32 @@ import subprocess
 import multiprocessing as mp
 import threading
 
+import numpy as np
 import setproctitle
+
+
+class Detector(object):
+    def __init__(self, n_dim, alpha=0.05):
+        self._alpha = alpha
+        self._mean = np.zeros(n_dim)
+        self._square_mean = np.zeros(n_dim)
+        self._count = 0
+
+    def detect(self, stats):
+        self._count += 1
+        stats = np.array(stats)
+        print(stats)
+        assert stats.shape == self._mean.shape, stats.shape
+        std = np.sqrt(self._square_mean - np.square(self._mean))
+        print(self._mean)
+        print(std)
+        condition = (stats > self._mean + 3 * std) | \
+            (stats < self._mean - 3 * std)
+        anomaly = condition.sum() > 0
+        self._mean = self._mean * (1 - self._alpha) + stats * self._alpha
+        self._square_mean = self._square_mean * (1 - self._alpha) \
+            + np.square(stats) * self._alpha
+        return anomaly
 
 
 def parse_process_stat(f):
@@ -80,6 +105,8 @@ def main():
     pre_utime, pre_stime = None, None
     pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches = None, None
 
+    detector = Detector(4)
+
     def loop():
         if not p.is_alive():
             return
@@ -90,12 +117,19 @@ def main():
         nonlocal pre_utime, pre_stime
         nonlocal pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches
         if pre_utime is not None:
-            print(
+        #    print(
+        #        utime - pre_utime,
+        #        stime - pre_stime,
+        #        voluntary_ctxt_switches - pre_voluntary_ctxt_switches,
+        #        nonvoluntary_ctxt_switches - pre_nonvoluntary_ctxt_switches
+        #    )
+            res = detector.detect((
                 utime - pre_utime,
                 stime - pre_stime,
                 voluntary_ctxt_switches - pre_voluntary_ctxt_switches,
-                nonvoluntary_ctxt_switches - pre_nonvoluntary_ctxt_switches
-            )
+            nonvoluntary_ctxt_switches - pre_nonvoluntary_ctxt_switches
+            ))
+            print(res)
         pre_utime, pre_stime = utime, stime
         pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches = \
             voluntary_ctxt_switches, nonvoluntary_ctxt_switches
