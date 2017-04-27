@@ -2,12 +2,18 @@ import os
 import sys
 import random
 import hashlib
+import pickle
 import subprocess
 import multiprocessing as mp
 import threading
 
 import numpy as np
+import sklearn
 import setproctitle
+
+import lof
+import utils
+import proc_utils
 
 
 class Detector(object):
@@ -34,32 +40,14 @@ class Detector(object):
         return anomaly
 
 
-def parse_process_stat(f):
-    stat = f.readline()
-    stat = stat.split(' ')
-    utime = int(stat[13])
-    stime = int(stat[14])
-    cutime = int(stat[15])
-    cstime = int(stat[16])
-    return utime, stime
+class LOFDetector(object):
+    def __init__(self, lof_pkl_file, scaler_pkl_file):
+        self._clf = pickle.load(open(lof_pkl_file, 'rb'))
+        self._scaler = pickle.load(open(scaler_pkl_file, 'rb'))
 
-
-def parse_process_status(f):
-    lines = f.readlines()
-    voluntary_ctxt_switches = int(lines[-2].split(':')[1])
-    nonvoluntary_ctxt_switches = int(lines[-1].split(':')[1])
-    return voluntary_ctxt_switches, nonvoluntary_ctxt_switches
-
-
-def parse_stat(f):
-    cpu_line = f.readline()
-    counts = cpu_line.split()[1:]
-    user = int(counts[0])
-    nice = int(counts[1])
-    system = int(counts[2])
-    idle = int(counts[3])
-    iowait = int(counts[4])
-    return user, nice, system, idle
+    def detect(self, stats):
+        stats = self._scaler.transform(stats)
+        return self._clf._predict(stats)
 
 
 def cal_file_hash(filename, process_name='hash'):
@@ -101,40 +89,26 @@ def main():
     stat_file = os.path.join(base_dir, 'stat')
     status_file = os.path.join(base_dir, 'status')
     fd_dir = os.path.join(base_dir, 'fd')
+    system_stat_file = os.path.join('/proc', 'stat')
 
-    pre_utime, pre_stime = None, None
-    pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches = None, None
+    detector = LOFDetector('lof.pkl', 'scaler.pkl')
 
-    detector = Detector(4)
+    logfile = open('log.txt', 'w')
 
-    def loop():
-        if not p.is_alive():
-            return
-        threading.Timer(1, loop).start()
-        utime, stime = parse_process_stat(open(stat_file))
-        voluntary_ctxt_switches, nonvoluntary_ctxt_switches = \
-            parse_process_status(open(status_file))
-        nonlocal pre_utime, pre_stime
-        nonlocal pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches
-        if pre_utime is not None:
-        #    print(
-        #        utime - pre_utime,
-        #        stime - pre_stime,
-        #        voluntary_ctxt_switches - pre_voluntary_ctxt_switches,
-        #        nonvoluntary_ctxt_switches - pre_nonvoluntary_ctxt_switches
-        #    )
-            res = detector.detect((
-                utime - pre_utime,
-                stime - pre_stime,
-                voluntary_ctxt_switches - pre_voluntary_ctxt_switches,
-            nonvoluntary_ctxt_switches - pre_nonvoluntary_ctxt_switches
-            ))
-            print(res)
-        pre_utime, pre_stime = utime, stime
-        pre_voluntary_ctxt_switches, pre_nonvoluntary_ctxt_switches = \
-            voluntary_ctxt_switches, nonvoluntary_ctxt_switches
+    pre_stat = None
 
-    loop()
+    def do_work():
+        stat = np.array(proc_utils.parse_stat(open(system_stat_file)))
+        nonlocal pre_stat
+        if pre_stat is not None:
+            stat_diff = stat - pre_stat
+            pre_stat = stat
+            print(' '.join(map(str, stat_diff)), file=logfile, flush=True)
+            print(detector.detect(stat_diff.reshape(1, -1)))
+        else:
+            pre_stat = stat
+
+    utils.PerpetualTimer(1, do_work, terminal_condition=lambda: not p.is_alive()).start()
 
 
 if __name__ == '__main__':
