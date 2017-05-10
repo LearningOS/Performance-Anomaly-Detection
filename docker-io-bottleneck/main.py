@@ -81,7 +81,8 @@ def detect_process(pid):
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    p = mp.Process(target=cal_file_hash, args=('/data/graduate-project/output.txt',))
+    p = mp.Process(target=cal_file_hash,
+                   args=('/data/graduate-project/output.txt',))
     p.start()
     pid = get_pid_by_name('hash')
 
@@ -108,7 +109,8 @@ def main():
         else:
             pre_stat = stat
 
-    utils.PerpetualTimer(1, do_work, terminal_condition=lambda: not p.is_alive()).start()
+    utils.PerpetualTimer(
+        1, do_work, terminal_condition=lambda: not p.is_alive()).start()
 
 
 if __name__ == '__main__':
