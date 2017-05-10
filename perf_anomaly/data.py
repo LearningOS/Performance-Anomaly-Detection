@@ -1,15 +1,22 @@
 import os
 import abc
-import typing
 import collections
+from typing import Tuple, List, NamedTuple
+
+import numpy as np
+import pandas as pd
+
+from perf_anomaly import utils
 
 
 class BaseParser(metaclass=abc.ABCMeta):
+    cumulative = NamedTuple('Base', [])  # type: NamedTuple
+
     def __init__(self):
         pass
 
     @abc.abstractmethod
-    def get_data(self) -> typing.NamedTuple:
+    def get_data(self) -> NamedTuple:
         raise NotImplementedError()
 
 
@@ -18,6 +25,17 @@ class SystemStatParser(BaseParser):
     SystemStat = collections.namedtuple('SystemStat',
                                         ['user_time', 'nice_time', 'system_time', 'idle_time', 'iowait_time',
                                          'irq', 'softirq', 'intr', 'ctxt'])
+    cumulative = SystemStat(
+        user_time=True,
+        nice_time=True,
+        system_time=True,
+        idle_time=True,
+        iowait_time=True,
+        irq=True,
+        softirq=True,
+        intr=True,
+        ctxt=True
+    )
 
     def __init__(self):
         super(SystemStatParser, self).__init__()
@@ -65,6 +83,13 @@ class SystemLoadAvgParser(BaseParser):
     SystemLoadAvg = collections.namedtuple('SystemLoadAvg',
                                            ['load_1min', 'load_5min', 'load_15min',
                                             'run_threads', 'all_threads'])
+    cumulative = SystemLoadAvg(
+        load_1min=False,
+        load_5min=False,
+        load_15min=False,
+        run_threads=False,
+        all_threads=False
+    )
 
     def __init__(self):
         super(SystemLoadAvgParser, self).__init__()
@@ -93,6 +118,12 @@ class SystemMemInfoParser(BaseParser):
     # instant variable
     SystemMemInfo = collections.namedtuple('SystemMemInfo',
                                            ['mem_total', 'mem_free', 'swap_total', 'swap_free'])
+    cumulative = SystemMemInfo(
+        mem_total=False,
+        mem_free=False,
+        swap_total=False,
+        swap_free=False
+    )
 
     def __init__(self):
         super(SystemMemInfoParser, self).__init__()
@@ -116,6 +147,16 @@ class SystemNetworkStatParser(BaseParser):
     SystemNetworkStat = collections.namedtuple('SystemNetworkStat',
                                                ['rx_bytes', 'rx_packets', 'rx_errs', 'rx_drops',
                                                 'tx_bytes', 'tx_packets', 'tx_errs', 'tx_drops'])
+    cumulative = SystemNetworkStat(
+        rx_bytes=True,
+        rx_packets=True,
+        rx_errs=True,
+        rx_drops=True,
+        tx_bytes=True,
+        tx_packets=True,
+        tx_errs=True,
+        tx_drops=True
+    )
 
     def __init__(self):
         super(SystemNetworkStatParser, self).__init__()
@@ -151,6 +192,7 @@ class SystemDiskStatParser(BaseParser):
                                             ['nr_read', 'nr_read_merge', 'nr_sectors_read', 'ms_read',
                                              'nr_write', 'nr_write_merge', 'nr_sectors_write', 'ms_write',
                                              'nr_io', 'ms_io', 'weighted_ms_io'])
+    cumulative = SystemDiskStat(*([True] * len(SystemDiskStat._fields)))
 
     def __init__(self):
         super(SystemDiskStatParser, self).__init__()
@@ -172,6 +214,7 @@ class SystemVMStatParser(BaseParser):
     # cumulative variable
     SystemVMStat = collections.namedtuple('SystemVMStat',
                                           ['pgpgin', 'pgpgout', 'pswpin', 'pswpout', 'pgfault'])
+    cumulative = SystemVMStat(*([True] * len(SystemVMStat._fields)))
 
     def __init__(self):
         super(SystemVMStatParser, self).__init__()
@@ -184,18 +227,39 @@ class SystemVMStatParser(BaseParser):
         return self.SystemVMStat(**{k: v for k, v in key_value_map.items() if k in self.SystemVMStat._fields})
 
 
+# call each registered parser in a certain time period
 class SystemDataCollector(object):
-    def __init__(self):
-        pass
+    def __init__(self, time_interval: int=1):
+        self._parsers = []  # type: List[Tuple[str, BaseParser]]
+        self._pre_pd = pd.DataFrame()  # type: pd.DataFrame
+        self._time_interval = time_interval  # type: int
+        self._pd_cumulative = pd.DataFrame()  # type: pd.DataFrame
 
-    def register_parser(self, namespace: str, parser: BaseParser):
-        pass
+    def register_parser(self, namespace: str, parser: BaseParser) -> None:
+        self._parsers.append((namespace, parser))
 
+    def _worker_func(self):
+        pds = []  # type: List[pd.DataFrame]
+        for namespace, parser in self._parsers:
+            data = parser.get_data()
+            data_pd = pd.DataFrame([data], columns=list(map(lambda s: '/'.join([namespace, s]), data._fields)))
+            pds.append(data_pd)
+        pd_all = pd.concat(pds, axis=1)  # type: pd.DataFrame
+        # difference should divided by time interval
+        pd_res = (pd_all * self._pd_cumulative - self._pre_pd * self._pd_cumulative) / self._time_interval \
+            + pd_all * (1 - self._pd_cumulative)
+        # pd_res = pd_all - self._pre_pd * self._pd_cumulative
+        print(pd_res)
+        self._pre_pd = pd_all
 
-if __name__ == '__main__':
-    print(SystemStatParser().get_data())
-    print(SystemLoadAvgParser().get_data())
-    print(SystemMemInfoParser().get_data())
-    print(SystemNetworkStatParser().get_data())
-    print(SystemDiskStatParser().get_data())
-    print(SystemVMStatParser().get_data())
+    def start(self) -> None:
+        pds = []  # type: List[pd.DataFrame]
+        for namespace, parser in self._parsers:
+            cumulative = parser.cumulative
+            cumulative_pd = pd.DataFrame([cumulative],
+                                         columns=list(map(lambda s: '/'.join([namespace, s]), cumulative._fields)))
+            pds.append(cumulative_pd)
+        self._pd_cumulative = pd.concat(pds, axis=1).astype('int')  # type: pd.DataFrame
+        self._pre_pd = pd.DataFrame(0, index=[0], columns=self._pd_cumulative.columns.values)
+        self._worker_func()
+        utils.PerpetualTimer(self._time_interval, self._worker_func).start()
