@@ -126,7 +126,6 @@ class SystemNetworkStatParser(BaseParser):
             f.readline()
             _, rx, tx = f.readline().split('|')
             rx_attributes = rx.split()
-            print(rx_attributes)
             tx_attributes = tx.split()
             all_iface_lines = f.readlines()
             all_iface_stats = list(map(lambda x: list(map(int, x.split()[1:])), all_iface_lines))
@@ -159,8 +158,30 @@ class SystemDiskStatParser(BaseParser):
 
     def get_data(self):
         with open(self._system_disk_stat_path) as f:
+            stats = [0] * len(self.SystemDiskStat._fields)
             for l in f.readlines():
-                pass
+                fields = l.split()
+                if fields[2][-1].isdigit():
+                    continue
+                else:
+                    stats = [x + y for x, y in zip(stats, map(int, fields[3:]))]
+        return self.SystemDiskStat(*stats)
+
+
+class SystemVMStatParser(BaseParser):
+    # cumulative variable
+    SystemVMStat = collections.namedtuple('SystemVMStat',
+                                          ['pgpgin', 'pgpgout', 'pswpin', 'pswpout', 'pgfault'])
+
+    def __init__(self):
+        super(SystemVMStatParser, self).__init__()
+        self._system_vmstat_path = os.path.join('/proc', 'vmstat')
+
+    def get_data(self) -> SystemVMStat:
+        with open(self._system_vmstat_path) as f:
+            lines = f.readlines()
+            key_value_map = {k: int(v) for k, v in map(lambda x: x.split(), lines)}
+        return self.SystemVMStat(**{k: v for k, v in key_value_map.items() if k in self.SystemVMStat._fields})
 
 
 class SystemDataCollector(object):
@@ -176,3 +197,5 @@ if __name__ == '__main__':
     print(SystemLoadAvgParser().get_data())
     print(SystemMemInfoParser().get_data())
     print(SystemNetworkStatParser().get_data())
+    print(SystemDiskStatParser().get_data())
+    print(SystemVMStatParser().get_data())
