@@ -12,7 +12,7 @@ class WindowAdaptiveLOF(object):
     def __init__(self, window_size: int):
         self._X = None  # type: np.ndarray
         self._X_scaled = None  # type: np.ndarray
-        self._lof = lof.LocalOutlierFactor()
+        self._lof = lof.LocalOutlierFactor(contamination=0.02)
         self._window_size = window_size
         self._scaler = StandardScaler()  # type: sklearn.preprocessing.StandardScaler
 
@@ -27,7 +27,7 @@ class WindowAdaptiveLOF(object):
     def fit(self, X: np.ndarray):
         self._X = X
         self._X_scaled = self._scaler.fit_transform(X)
-        self._lof.fit(X)
+        self._lof.fit(self._X_scaled)
 
     def add_new_data_point(self, x):
         if len(self._X) >= self._window_size:

@@ -86,14 +86,11 @@ class SystemLoadAvgParser(BaseParser):
     # instant variable
     SystemLoadAvg = collections.namedtuple('SystemLoadAvg',
                                            ['load_1min', 'load_5min',
-                                            'load_15min',
-                                            'run_threads', 'all_threads'])
+                                            'load_15min'])
     cumulative = SystemLoadAvg(
         load_1min=False,
         load_5min=False,
         load_15min=False,
-        run_threads=False,
-        all_threads=False
     )
 
     def __init__(self):
@@ -107,15 +104,11 @@ class SystemLoadAvgParser(BaseParser):
             load_1min = float(numbers[0])
             load_5min = float(numbers[1])
             load_15min = float(numbers[2])
-            run_threads = int(numbers[3].split('/')[0])
-            all_threads = int(numbers[3].split('/')[1])
 
         return self.SystemLoadAvg(
             load_1min=load_1min,
             load_5min=load_5min,
             load_15min=load_15min,
-            run_threads=run_threads,
-            all_threads=all_threads
         )
 
 

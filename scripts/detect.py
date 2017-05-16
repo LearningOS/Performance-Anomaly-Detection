@@ -51,6 +51,8 @@ class Analyzer(object):
 
 
 def main():
+    os.system('echo 3 > /proc/sys/vm/drop_caches')
+
     p = mp.Process(target=cal_file_hash,
                    args=('/data/graduate-project/output.txt',))
     p.start()
@@ -69,11 +71,11 @@ def main():
 
     collector = SystemDataCollector(1, callback)
     collector.register_parser('system', SystemStatParser())
-    collector.register_parser('system', SystemLoadAvgParser())
-    collector.register_parser('system', SystemMemInfoParser())
-    collector.register_parser('system', SystemNetworkStatParser())
-    collector.register_parser('system', SystemDiskStatParser())
-    collector.register_parser('system', SystemVMStatParser())
+    # collector.register_parser('system', SystemLoadAvgParser())
+    # collector.register_parser('system', SystemMemInfoParser())
+    # collector.register_parser('system', SystemNetworkStatParser())
+    # collector.register_parser('system', SystemDiskStatParser())
+    # collector.register_parser('system', SystemVMStatParser())
     collector.start()
 
     collector.thread.join()
