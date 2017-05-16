@@ -16,6 +16,14 @@ class WindowAdaptiveLOF(object):
         self._window_size = window_size
         self._scaler = StandardScaler()  # type: sklearn.preprocessing.StandardScaler
 
+    @property
+    def scaler(self):
+        return self._scaler
+
+    @property
+    def lof(self):
+        return self._lof
+
     def fit(self, X: np.ndarray):
         self._X = X
         self._X_scaled = self._scaler.fit_transform(X)

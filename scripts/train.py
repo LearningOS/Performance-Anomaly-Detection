@@ -34,12 +34,13 @@ def main():
     p = mp.Process(target=cal_file_hash,
                    args=('/data/graduate-project/output.txt',))
     p.start()
-    pid = get_pid_by_name('hash')
+    # pid = get_pid_by_name('hash')
 
     dfs = []  # type: List[pd.DataFrame]
 
     def callback(df: pd.DataFrame) -> None:
         dfs.append(df)
+        print(df)
 
     collector = SystemDataCollector(1, callback)
     collector.register_parser('system', SystemStatParser())
@@ -57,7 +58,7 @@ def main():
     model = WindowAdaptiveLOF(window_size=nr_data)
     model.fit(data)
 
-    pickle.dump(model, 'model.pkl')
+    pickle.dump(model, open('model.pkl', 'wb'))
 
 
 if __name__ == '__main__':

@@ -13,10 +13,15 @@ class PerpetualTimer(object):
 
     def _handler(self):
         if self._terminal_condition and self._terminal_condition():
+            self._is_running = False
             return
         self._thread = threading.Timer(self._time_interval, self._handler)
         self._thread.start()
         self._func()
+
+    @property
+    def is_running(self):
+        return self._is_running
 
     def start(self):
         if not self._is_running:

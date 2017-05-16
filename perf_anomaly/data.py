@@ -1,5 +1,6 @@
 import os
 import abc
+import time
 import threading
 import collections
 from typing import Tuple, List, NamedTuple, Callable
@@ -294,8 +295,11 @@ class SystemDataCollector(object):
         self._worker_func()
 
         def target():
-            utils.PerpetualTimer(self._time_interval, self._worker_func,
-                                 terminal_condition=terminal_condition).start()
+            timer = utils.PerpetualTimer(self._time_interval, self._worker_func,
+                                         terminal_condition=terminal_condition)
+            timer.start()
+            while timer.is_running:
+                time.sleep(self._time_interval)
 
         self._thread = threading.Thread(target=target)
         self._thread.start()
