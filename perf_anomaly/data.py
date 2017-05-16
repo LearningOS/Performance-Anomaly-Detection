@@ -1,7 +1,8 @@
 import os
 import abc
+import threading
 import collections
-from typing import Tuple, List, NamedTuple
+from typing import Tuple, List, NamedTuple, Callable
 
 import numpy as np
 import pandas as pd
@@ -229,11 +230,13 @@ class SystemVMStatParser(BaseParser):
 
 # call each registered parser in a certain time period
 class SystemDataCollector(object):
-    def __init__(self, time_interval: int=1):
+    def __init__(self, time_interval: int, callback: Callable[[pd.DataFrame], None]):
         self._parsers = []  # type: List[Tuple[str, BaseParser]]
         self._pre_pd = pd.DataFrame()  # type: pd.DataFrame
         self._time_interval = time_interval  # type: int
         self._pd_cumulative = pd.DataFrame()  # type: pd.DataFrame
+        self._callback = callback
+        self._thread = None  # type: threading.Thread
 
     def register_parser(self, namespace: str, parser: BaseParser) -> None:
         self._parsers.append((namespace, parser))
@@ -249,10 +252,14 @@ class SystemDataCollector(object):
         pd_res = (pd_all * self._pd_cumulative - self._pre_pd * self._pd_cumulative) / self._time_interval \
             + pd_all * (1 - self._pd_cumulative)
         # pd_res = pd_all - self._pre_pd * self._pd_cumulative
-        print(pd_res)
         self._pre_pd = pd_all
+        self._callback(pd_res)
 
-    def start(self) -> None:
+    @property
+    def thread(self) -> threading.Thread:
+        return self._thread
+
+    def start(self, terminal_condition=None) -> None:
         pds = []  # type: List[pd.DataFrame]
         for namespace, parser in self._parsers:
             cumulative = parser.cumulative
@@ -262,4 +269,9 @@ class SystemDataCollector(object):
         self._pd_cumulative = pd.concat(pds, axis=1).astype('int')  # type: pd.DataFrame
         self._pre_pd = pd.DataFrame(0, index=[0], columns=self._pd_cumulative.columns.values)
         self._worker_func()
-        utils.PerpetualTimer(self._time_interval, self._worker_func).start()
+
+        def target():
+            utils.PerpetualTimer(self._time_interval, self._worker_func, terminal_condition=terminal_condition).start()
+
+        self._thread = threading.Thread(target=target)
+        self._thread.start()
