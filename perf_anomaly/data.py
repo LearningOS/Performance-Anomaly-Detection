@@ -24,7 +24,9 @@ class BaseParser(metaclass=abc.ABCMeta):
 class SystemStatParser(BaseParser):
     # cumulative variable
     SystemStat = collections.namedtuple('SystemStat',
-                                        ['user_time', 'nice_time', 'system_time', 'idle_time', 'iowait_time',
+                                        ['user_time', 'nice_time',
+                                         'system_time', 'idle_time',
+                                         'iowait_time',
                                          'irq', 'softirq', 'intr', 'ctxt'])
     cumulative = SystemStat(
         user_time=True,
@@ -82,7 +84,8 @@ class SystemStatParser(BaseParser):
 class SystemLoadAvgParser(BaseParser):
     # instant variable
     SystemLoadAvg = collections.namedtuple('SystemLoadAvg',
-                                           ['load_1min', 'load_5min', 'load_15min',
+                                           ['load_1min', 'load_5min',
+                                            'load_15min',
                                             'run_threads', 'all_threads'])
     cumulative = SystemLoadAvg(
         load_1min=False,
@@ -118,7 +121,8 @@ class SystemLoadAvgParser(BaseParser):
 class SystemMemInfoParser(BaseParser):
     # instant variable
     SystemMemInfo = collections.namedtuple('SystemMemInfo',
-                                           ['mem_total', 'mem_free', 'swap_total', 'swap_free'])
+                                           ['mem_total', 'mem_free',
+                                            'swap_total', 'swap_free'])
     cumulative = SystemMemInfo(
         mem_total=False,
         mem_free=False,
@@ -133,7 +137,8 @@ class SystemMemInfoParser(BaseParser):
     def get_data(self):
         with open(self._system_meminfo_path) as f:
             lines = f.readlines()
-            key_value_map = {k: v for (k, v) in map(lambda l: (l.split()[0][:-1], int(l.split()[1])), lines)}
+            key_value_map = {k: v for (k, v) in map(
+                lambda l: (l.split()[0][:-1], int(l.split()[1])), lines)}
 
         return self.SystemMemInfo(
             mem_total=key_value_map['MemTotal'],
@@ -146,8 +151,10 @@ class SystemMemInfoParser(BaseParser):
 class SystemNetworkStatParser(BaseParser):
     # cumulative variable
     SystemNetworkStat = collections.namedtuple('SystemNetworkStat',
-                                               ['rx_bytes', 'rx_packets', 'rx_errs', 'rx_drops',
-                                                'tx_bytes', 'tx_packets', 'tx_errs', 'tx_drops'])
+                                               ['rx_bytes', 'rx_packets',
+                                                'rx_errs', 'rx_drops',
+                                                'tx_bytes', 'tx_packets',
+                                                'tx_errs', 'tx_drops'])
     cumulative = SystemNetworkStat(
         rx_bytes=True,
         rx_packets=True,
@@ -161,7 +168,8 @@ class SystemNetworkStatParser(BaseParser):
 
     def __init__(self):
         super(SystemNetworkStatParser, self).__init__()
-        self._system_network_stat_path = os.path.join(os.path.join('/proc', 'net'), 'dev')
+        self._system_network_stat_path = os.path.join(
+            os.path.join('/proc', 'net'), 'dev')
 
     def get_data(self) -> SystemNetworkStat:
         with open(self._system_network_stat_path) as f:
@@ -170,10 +178,12 @@ class SystemNetworkStatParser(BaseParser):
             rx_attributes = rx.split()
             tx_attributes = tx.split()
             all_iface_lines = f.readlines()
-            all_iface_stats = list(map(lambda x: list(map(int, x.split()[1:])), all_iface_lines))
+            all_iface_stats = list(
+                map(lambda x: list(map(int, x.split()[1:])), all_iface_lines))
             sum_all_iface = list(map(sum, zip(*all_iface_stats)))
             half = len(sum_all_iface) // 2
-            sum_all_iface_rx, sum_all_iface_tx = sum_all_iface[:half], sum_all_iface[half:]
+            sum_all_iface_rx, sum_all_iface_tx = sum_all_iface[
+                                                 :half], sum_all_iface[half:]
 
         return self.SystemNetworkStat(
             rx_bytes=sum_all_iface_rx[rx_attributes.index('bytes')],
@@ -190,9 +200,12 @@ class SystemNetworkStatParser(BaseParser):
 class SystemDiskStatParser(BaseParser):
     # cumulative variable
     SystemDiskStat = collections.namedtuple('SystemDiskStat',
-                                            ['nr_read', 'nr_read_merge', 'nr_sectors_read', 'ms_read',
-                                             'nr_write', 'nr_write_merge', 'nr_sectors_write', 'ms_write',
-                                             'nr_io', 'ms_io', 'weighted_ms_io'])
+                                            ['nr_read', 'nr_read_merge',
+                                             'nr_sectors_read', 'ms_read',
+                                             'nr_write', 'nr_write_merge',
+                                             'nr_sectors_write', 'ms_write',
+                                             'nr_io', 'ms_io',
+                                             'weighted_ms_io'])
     cumulative = SystemDiskStat(*([True] * len(SystemDiskStat._fields)))
 
     def __init__(self):
@@ -214,7 +227,8 @@ class SystemDiskStatParser(BaseParser):
 class SystemVMStatParser(BaseParser):
     # cumulative variable
     SystemVMStat = collections.namedtuple('SystemVMStat',
-                                          ['pgpgin', 'pgpgout', 'pswpin', 'pswpout', 'pgfault'])
+                                          ['pgpgin', 'pgpgout', 'pswpin',
+                                           'pswpout', 'pgfault'])
     cumulative = SystemVMStat(*([True] * len(SystemVMStat._fields)))
 
     def __init__(self):
@@ -224,13 +238,16 @@ class SystemVMStatParser(BaseParser):
     def get_data(self) -> SystemVMStat:
         with open(self._system_vmstat_path) as f:
             lines = f.readlines()
-            key_value_map = {k: int(v) for k, v in map(lambda x: x.split(), lines)}
-        return self.SystemVMStat(**{k: v for k, v in key_value_map.items() if k in self.SystemVMStat._fields})
+            key_value_map = {k: int(v) for k, v in
+                             map(lambda x: x.split(), lines)}
+        return self.SystemVMStat(**{k: v for k, v in key_value_map.items() if
+                                    k in self.SystemVMStat._fields})
 
 
 # call each registered parser in a certain time period
 class SystemDataCollector(object):
-    def __init__(self, time_interval: int, callback: Callable[[pd.DataFrame], None]):
+    def __init__(self, time_interval: int,
+                 callback: Callable[[pd.DataFrame], None]):
         self._parsers = []  # type: List[Tuple[str, BaseParser]]
         self._pre_pd = pd.DataFrame()  # type: pd.DataFrame
         self._time_interval = time_interval  # type: int
@@ -245,12 +262,14 @@ class SystemDataCollector(object):
         pds = []  # type: List[pd.DataFrame]
         for namespace, parser in self._parsers:
             data = parser.get_data()
-            data_pd = pd.DataFrame([data], columns=list(map(lambda s: '/'.join([namespace, s]), data._fields)))
+            data_pd = pd.DataFrame([data], columns=list(
+                map(lambda s: '/'.join([namespace, s]), data._fields)))
             pds.append(data_pd)
         pd_all = pd.concat(pds, axis=1)  # type: pd.DataFrame
         # difference should divided by time interval
-        pd_res = (pd_all * self._pd_cumulative - self._pre_pd * self._pd_cumulative) / self._time_interval \
-            + pd_all * (1 - self._pd_cumulative)
+        pd_res = (pd_all * self._pd_cumulative
+                  - self._pre_pd * self._pd_cumulative) / self._time_interval \
+                 + pd_all * (1 - self._pd_cumulative)
         # pd_res = pd_all - self._pre_pd * self._pd_cumulative
         self._pre_pd = pd_all
         self._callback(pd_res)
@@ -264,14 +283,19 @@ class SystemDataCollector(object):
         for namespace, parser in self._parsers:
             cumulative = parser.cumulative
             cumulative_pd = pd.DataFrame([cumulative],
-                                         columns=list(map(lambda s: '/'.join([namespace, s]), cumulative._fields)))
+                                         columns=list(map(
+                                             lambda s: '/'.join([namespace, s]),
+                                             cumulative._fields)))
             pds.append(cumulative_pd)
-        self._pd_cumulative = pd.concat(pds, axis=1).astype('int')  # type: pd.DataFrame
-        self._pre_pd = pd.DataFrame(0, index=[0], columns=self._pd_cumulative.columns.values)
+        self._pd_cumulative = pd.concat(pds, axis=1).astype(
+            'int')  # type: pd.DataFrame
+        self._pre_pd = pd.DataFrame(0, index=[0],
+                                    columns=self._pd_cumulative.columns.values)
         self._worker_func()
 
         def target():
-            utils.PerpetualTimer(self._time_interval, self._worker_func, terminal_condition=terminal_condition).start()
+            utils.PerpetualTimer(self._time_interval, self._worker_func,
+                                 terminal_condition=terminal_condition).start()
 
         self._thread = threading.Thread(target=target)
         self._thread.start()

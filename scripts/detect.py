@@ -24,7 +24,11 @@ def cal_file_hash(filename, process_name='hash'):
 
 class Analyzer(object):
     def __init__(self, cls_pkl, scaler_pkl):
-        self._thread = None
+        self._thread = None  # threading.Thread
+
+    @property
+    def thread(self):
+        return self._thread
 
     def start(self):
         pass
