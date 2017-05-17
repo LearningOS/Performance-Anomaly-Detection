@@ -51,7 +51,7 @@ class Analyzer(object):
             return
 
     def start(self):
-        self._thread = threading.Thread(target=self._target)
+        self._thread = threading.Thread(target=self._target, daemon=True)
         self._thread.start()
 
 
@@ -81,9 +81,9 @@ def main():
     collector.register_parser('system', SystemStatParser())
     # collector.register_parser('system', SystemLoadAvgParser())
     # collector.register_parser('system', SystemMemInfoParser())
-    # collector.register_parser('system', SystemNetworkStatParser())
-    # collector.register_parser('system', SystemDiskStatParser())
-    # collector.register_parser('system', SystemVMStatParser())
+    collector.register_parser('system', SystemNetworkStatParser())
+    collector.register_parser('system', SystemDiskStatParser())
+    collector.register_parser('system', SystemVMStatParser())
     collector.start(terminal_condition=lambda: not p.is_alive())
 
     collector.thread.join()

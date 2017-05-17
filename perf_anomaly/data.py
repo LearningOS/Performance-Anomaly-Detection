@@ -294,5 +294,5 @@ class SystemDataCollector(object):
             while timer.is_running:
                 time.sleep(self._time_interval)
 
-        self._thread = threading.Thread(target=target)
+        self._thread = threading.Thread(target=target, daemon=True)
         self._thread.start()
