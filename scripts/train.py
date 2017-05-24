@@ -32,15 +32,19 @@ def get_pid_by_name(name):
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    p = mp.Process(target=cal_file_hash,
-                   args=('/data/graduate-project/output.txt',))
-    p.start()
+    # p = mp.Process(target=cal_file_hash,
+    #               args=('/data/graduate-project/output.txt',))
+    # p.start()
     # pid = get_pid_by_name('hash')
 
     q = Queue()
     dfs = []  # type: List[pd.DataFrame]
 
+    cnt = 0
+
     def callback(df: pd.DataFrame) -> None:
+        nonlocal cnt
+        cnt += 1
         q.put(q)
         dfs.append(df)
         print(df)
@@ -51,14 +55,14 @@ def main():
     # analyzer = Analyzer('model.pkl', getter)
     # analyzer.start()
 
-    collector = SystemDataCollector(1, callback)
+    collector = SystemDataCollector(5, callback)
     collector.register_parser('system', SystemStatParser())
     # collector.register_parser('system', SystemLoadAvgParser())
     # collector.register_parser('system', SystemMemInfoParser())
     collector.register_parser('system', SystemNetworkStatParser())
     collector.register_parser('system', SystemDiskStatParser())
     collector.register_parser('system', SystemVMStatParser())
-    collector.start(terminal_condition=lambda: not p.is_alive())
+    collector.start(terminal_condition=lambda: cnt > 200)
 
     collector.thread.join()
     # analyzer.thread.join()

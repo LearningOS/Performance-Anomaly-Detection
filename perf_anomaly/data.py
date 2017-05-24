@@ -241,13 +241,14 @@ class SystemVMStatParser(BaseParser):
 # call each registered parser in a certain time period
 class SystemDataCollector(object):
     def __init__(self, time_interval: int,
-                 callback: Callable[[pd.DataFrame], None]):
+                 callback: Callable[[pd.DataFrame], None] = None):
         self._parsers = []  # type: List[Tuple[str, BaseParser]]
         self._pre_pd = pd.DataFrame()  # type: pd.DataFrame
         self._time_interval = time_interval  # type: int
         self._pd_cumulative = pd.DataFrame()  # type: pd.DataFrame
         self._callback = callback
         self._thread = None  # type: threading.Thread
+        self._first_run = True
 
     def register_parser(self, namespace: str, parser: BaseParser) -> None:
         self._parsers.append((namespace, parser))
@@ -266,7 +267,10 @@ class SystemDataCollector(object):
                  + pd_all * (1 - self._pd_cumulative)
         # pd_res = pd_all - self._pre_pd * self._pd_cumulative
         self._pre_pd = pd_all
-        self._callback(pd_res)
+        if self._first_run:
+            self._first_run = False
+        elif self._callback is not None:
+            self._callback(pd_res)
 
     @property
     def thread(self) -> threading.Thread:
@@ -285,7 +289,6 @@ class SystemDataCollector(object):
             'int')  # type: pd.DataFrame
         self._pre_pd = pd.DataFrame(0, index=[0],
                                     columns=self._pd_cumulative.columns.values)
-        self._worker_func()
 
         def target():
             timer = utils.PerpetualTimer(self._time_interval, self._worker_func,

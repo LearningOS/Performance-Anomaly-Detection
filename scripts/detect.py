@@ -12,6 +12,7 @@ import pandas as pd
 
 from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
+from perf_anomaly.injector import *
 
 
 def cal_file_hash(filename, process_name='hash'):
@@ -27,23 +28,32 @@ def cal_file_hash(filename, process_name='hash'):
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    p = mp.Process(target=cal_file_hash,
-                   args=('/data/graduate-project/output.txt',))
-    p.start()
+    # p = mp.Process(target=cal_file_hash,
+    #                args=('/data/graduate-project/output.txt',))
+    # p.start()
     # pid = get_pid_by_name('hash')
 
     q = Queue()
 
-    def callback(df: pd.DataFrame) -> None:
+    scorefile = open('score.txt', 'w')
+
+    injector = Injector(target="python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data")
+
+    def collector_callback(df: pd.DataFrame) -> None:
         q.put(df)
+
+    def analyzer_callback(predict, score) -> None:
+        print(predict, injector.injected)
+        print(score, injector.injected, file=scorefile, flush=True)
+        injector.trigger()
 
     def getter():
         return q.get(block=True, timeout=10)
 
-    analyzer = Analyzer('model.pkl', getter)
+    analyzer = Analyzer('model.pkl', getter, analyzer_callback)
     analyzer.start()
 
-    collector = SystemDataCollector(1, callback)
+    collector = SystemDataCollector(5, collector_callback)
     collector.register_parser('system', SystemStatParser())
     # collector.register_parser('system', SystemLoadAvgParser())
     # collector.register_parser('system', SystemMemInfoParser())

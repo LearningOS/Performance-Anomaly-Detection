@@ -40,3 +40,7 @@ class WindowAdaptiveLOF(object):
     def predict(self, X: np.ndarray):
         X_scaled = self._scaler.transform(X)
         return self._lof._predict(X_scaled)
+
+    def score(self, X: np.ndarray):
+        X_scaled = self._scaler.transform(X)
+        return self._lof._decision_function(X_scaled)

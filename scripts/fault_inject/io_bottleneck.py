@@ -15,7 +15,7 @@ def main():
     for root, dirs, files in os.walk(args.dir):
         random.shuffle(files)
         for filename in files:
-            # time.sleep(0.1)
+            time.sleep(0.1)
             with open(os.path.join(root, filename)) as f:
                 lines = f.readlines()
 
