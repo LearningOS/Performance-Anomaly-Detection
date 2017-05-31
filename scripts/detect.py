@@ -37,14 +37,19 @@ def main():
 
     scorefile = open('score.txt', 'w')
 
-    injector = Injector(target="python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data")
+    tasks = [
+        'python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data',
+        'python scripts/fault_inject/cpu_intensive.py'
+    ]
+
+    injector = Injector(target=tasks[1])
 
     def collector_callback(df: pd.DataFrame) -> None:
         q.put(df)
 
     def analyzer_callback(predict, score) -> None:
         print(predict, injector.injected)
-        print(score, injector.injected, file=scorefile, flush=True)
+        print(score, int(injector.injected), file=scorefile, flush=True)
         injector.trigger()
 
     def getter():

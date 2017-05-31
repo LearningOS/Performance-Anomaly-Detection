@@ -70,6 +70,7 @@ def main():
     nr_data = len(dfs)
     data = pd.concat(dfs, axis=0).as_matrix()  # type: np.array
     model = WindowAdaptiveLOF(window_size=nr_data)
+    # model = IndependentGaussian()
     model.fit(data)
 
     pickle.dump(model, open('model.pkl', 'wb'))

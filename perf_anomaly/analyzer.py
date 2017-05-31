@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from perf_anomaly.adaptive_lof import *
+from perf_anomaly.gaussian import *
 
 
 class Analyzer(object):
@@ -16,7 +17,7 @@ class Analyzer(object):
                  callback: Callable[[int, float], None] = None):
         self._thread = None  # threading.Thread
         self._model = pickle.load(
-            open(model_pkl, 'rb'))  # type: WindowAdaptiveLOF
+            open(model_pkl, 'rb'))
         self._getter = getter
         self._callback = callback
 
