@@ -8,18 +8,22 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from perf_anomaly.adaptive_lof import *
-from perf_anomaly.gaussian import *
+from perf_anomaly.adaptive_lof import WindowAdaptiveLOF
+from perf_anomaly.gaussian import IndependentGaussian
+from perf_anomaly.forest import Forest
 
 
 class Analyzer(object):
-    def __init__(self, model_pkl, getter,
+    def __init__(self, model, getter,
                  callback: Callable[[int, float], None] = None):
         self._thread = None  # threading.Thread
-        self._model = pickle.load(
-            open(model_pkl, 'rb'))
+        if isinstance(model, str):
+            self._model = pickle.load(open(model, 'rb'))
+        else:
+            self._model = model
         self._getter = getter
         self._callback = callback
+        self._terminal_condition = None
 
     @property
     def thread(self) -> threading.Thread:
@@ -27,7 +31,7 @@ class Analyzer(object):
 
     def _target(self):
         try:
-            while True:
+            while self._terminal_condition is None or not self._terminal_condition():
                 df = self._getter()
                 data = df.as_matrix()
                 predict = self._model.predict(data)[0]
@@ -37,6 +41,7 @@ class Analyzer(object):
         except Empty as e:
             return
 
-    def start(self):
+    def start(self, terminal_condition=None) -> None:
+        self._terminal_condition = terminal_condition
         self._thread = threading.Thread(target=self._target, daemon=True)
         self._thread.start()

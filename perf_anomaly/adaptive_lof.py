@@ -14,7 +14,8 @@ class WindowAdaptiveLOF(object):
         self._X_scaled = None  # type: np.ndarray
         self._lof = lof.LocalOutlierFactor(contamination=0.02)
         self._window_size = window_size
-        self._scaler = StandardScaler()  # type: sklearn.preprocessing.StandardScaler
+        self._scaler = StandardScaler()
+        # type: sklearn.preprocessing.StandardScaler
 
     @property
     def scaler(self):

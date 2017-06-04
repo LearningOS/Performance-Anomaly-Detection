@@ -14,16 +14,6 @@ from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
 
 
-def cal_file_hash(filename, process_name='hash'):
-    setproctitle.setproctitle(process_name)
-    m = hashlib.md5()
-    with open(filename) as f:
-        for chuck in iter(lambda: f.read(1024), ''):
-            m.update(chuck.encode('utf-8'))
-    digest = m.hexdigest()
-    return digest
-
-
 def get_pid_by_name(name):
     pid = subprocess.check_output(['pgrep', '-n', name])
     return int(pid)
@@ -32,12 +22,6 @@ def get_pid_by_name(name):
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    # p = mp.Process(target=cal_file_hash,
-    #               args=('/data/graduate-project/output.txt',))
-    # p.start()
-    # pid = get_pid_by_name('hash')
-
-    q = Queue()
     dfs = []  # type: List[pd.DataFrame]
 
     cnt = 0
@@ -45,15 +29,8 @@ def main():
     def callback(df: pd.DataFrame) -> None:
         nonlocal cnt
         cnt += 1
-        q.put(q)
         dfs.append(df)
         print(df)
-
-    # def getter():
-    #     return q.get(block=True, timeout=10)
-    #
-    # analyzer = Analyzer('model.pkl', getter)
-    # analyzer.start()
 
     collector = SystemDataCollector(5, callback)
     collector.register_parser('system', SystemStatParser())
@@ -65,7 +42,6 @@ def main():
     collector.start(terminal_condition=lambda: cnt > 200)
 
     collector.thread.join()
-    # analyzer.thread.join()
 
     nr_data = len(dfs)
     data = pd.concat(dfs, axis=0).as_matrix()  # type: np.array

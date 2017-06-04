@@ -28,11 +28,6 @@ def cal_file_hash(filename, process_name='hash'):
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    # p = mp.Process(target=cal_file_hash,
-    #                args=('/data/graduate-project/output.txt',))
-    # p.start()
-    # pid = get_pid_by_name('hash')
-
     q = Queue()
 
     scorefile = open('score.txt', 'w')
@@ -42,7 +37,7 @@ def main():
         'python scripts/fault_inject/cpu_intensive.py'
     ]
 
-    injector = Injector(target=tasks[1])
+    injector = Injector(target=tasks[0])
 
     def collector_callback(df: pd.DataFrame) -> None:
         q.put(df)
@@ -50,7 +45,7 @@ def main():
     def analyzer_callback(predict, score) -> None:
         print(predict, injector.injected)
         print(score, int(injector.injected), file=scorefile, flush=True)
-        injector.trigger()
+        # injector.trigger()
 
     def getter():
         return q.get(block=True, timeout=10)
