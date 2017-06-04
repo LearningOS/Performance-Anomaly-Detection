@@ -15,16 +15,6 @@ from perf_anomaly.analyzer import *
 from perf_anomaly.injector import *
 
 
-def cal_file_hash(filename, process_name='hash'):
-    setproctitle.setproctitle(process_name)
-    m = hashlib.md5()
-    with open(filename) as f:
-        for chuck in iter(lambda: f.read(1024), ''):
-            m.update(chuck.encode('utf-8'))
-    digest = m.hexdigest()
-    return digest
-
-
 def main():
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
