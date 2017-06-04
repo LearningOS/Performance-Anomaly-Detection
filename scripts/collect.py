@@ -29,7 +29,7 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run compress-gzip'
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run smallpt'
     workload_input = ''
 
     workload = run_command(workload_command, workload_input)
