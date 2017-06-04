@@ -8,10 +8,6 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from perf_anomaly.adaptive_lof import WindowAdaptiveLOF
-from perf_anomaly.gaussian import IndependentGaussian
-from perf_anomaly.forest import Forest
-
 
 class Analyzer(object):
     def __init__(self, model, getter,

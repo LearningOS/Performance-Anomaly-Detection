@@ -6,7 +6,7 @@ import sklearn
 from sklearn.preprocessing import StandardScaler
 
 
-class IndependentGaussian(object):
+class IndependentGaussianDetector(object):
     def __init__(self):
         self._scaler = StandardScaler()  # type: sklearn.preprocessing.StandardScaler
 
