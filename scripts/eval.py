@@ -42,9 +42,10 @@ def main():
 
     data = np.concatenate([workload_data, alternative_data], axis=0)
     label = np.concatenate([np.zeros(workload_data.shape[0]),
-                            np.ones(workload_data.shape[0])], axis=0)
+                            np.ones(alternative_data.shape[0])], axis=0)
 
     score = model.score(data)
+    print(score)
 
     fpr, tpr, thresholds = roc_curve(label, score, pos_label=1)
     roc_auc = roc_auc_score(label, score)

@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import subprocess
+import shlex
 
 import numpy as np
 import pandas as pd
@@ -10,11 +11,11 @@ from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
 
 
-def run_command(command, stdinput=''):
+def run_command(command, stdinput='', shell=True):
     workload = subprocess.Popen(command,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                shell=True,
+                                shell=shell,
                                 universal_newlines=True,
                                 bufsize=0)
     workload.stdin.write(stdinput)
@@ -29,11 +30,13 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run idle'
-    workload_input = '60\n'
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run video-cpu-usage'
+    workload_input = '1\n'
 
-    workload = run_command(workload_command, workload_input)
-    time.sleep(10)
+    fault_commands = [
+        'python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data',
+        'python scripts/fault_inject/cpu_intensive.py'
+    ]
 
     dfs = []  # type: List[pd.DataFrame]
 
@@ -52,13 +55,19 @@ def main():
     collector.register_parser('system', SystemNetworkStatParser())
     collector.register_parser('system', SystemDiskStatParser())
     collector.register_parser('system', SystemVMStatParser())
-    collector.start(terminal_condition=lambda: cnt > 200)
 
-    collector.thread.join()
+    workload = run_command(workload_command, workload_input)
+    time.sleep(10)
+
+    for fault_command in fault_commands:
+        fault = run_command(shlex.split(fault_command), shell=False)
+        collector.start(terminal_condition=lambda: cnt > 20, first_run=True)
+        collector.thread.join()
+        fault.terminate()
+        cnt = 0
 
     workload.terminate()
 
-    nr_data = len(dfs)
     data = pd.concat(dfs, axis=0)  # type: pd.DataFrame
     data.to_pickle(args.out)
 

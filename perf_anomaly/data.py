@@ -276,7 +276,9 @@ class SystemDataCollector(object):
     def thread(self) -> threading.Thread:
         return self._thread
 
-    def start(self, terminal_condition=None) -> None:
+    def start(self, terminal_condition=None, first_run=None) -> None:
+        if first_run:
+            self._first_run = first_run
         pds = []  # type: List[pd.DataFrame]
         for namespace, parser in self._parsers:
             cumulative = parser.cumulative

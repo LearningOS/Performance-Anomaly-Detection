@@ -11,7 +11,7 @@ class IsolationForestDetector(object):
     def __init__(self):
         self._scaler = StandardScaler()
         # type: sklearn.preprocessing.StandardScaler
-        self._forest = IsolationForest(contamination=0.02)
+        self._forest = IsolationForest(contamination=0.1)
         # type: sklearn.preprocessing.IsolationForest
 
     @property
