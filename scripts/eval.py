@@ -22,27 +22,36 @@ from perf_anomaly.svm import OneClassSVMDetector
 
 def main():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--workload', type=str, required=True,
-                        help='the workload data path')
-    parser.add_argument('--alternative', type=str, required=True,
-                        help='the alternative data path')
+    parser.add_argument('--data', type=str, required=True, nargs='+',
+                        help='the training data path')
+    parser.add_argument('--normal', type=str, required=True, nargs='+',
+                        help='the normal data path')
+    parser.add_argument('--anomaly', type=str, required=True, nargs='+',
+                        help='the anomaly data path')
     args = parser.parse_args()
 
-    workload_df = pd.read_pickle(args.workload)  # type: pd.DataFrame
-    alternative_df = pd.read_pickle(args.alternative)  # type: pd.DataFrame
+    training_df = pd.concat([pd.read_pickle(df_file) for df_file in args.data],
+                            axis=0)  # type: pd.DataFrame
 
-    workload_data = workload_df.as_matrix()
-    alternative_data = alternative_df.as_matrix()
+    normal_df = pd.concat([pd.read_pickle(df_file) for df_file in args.normal],
+                          axis=0)  # type: pd.DataFrame
+
+    anomaly_df = pd.concat([pd.read_pickle(df_file) for df_file in args.anomaly],
+                           axis=0)  # type: pd.DataFrame
+
+    training_data = training_df.as_matrix()
+    normal_data = normal_df.as_matrix()
+    anomaly_data = anomaly_df.as_matrix()
 
     model = LOFDetector()
     # model = IsolationForestDetector()
     # model = OneClassSVMDetector()
     # model = IndependentGaussianDetector()
-    model.fit(workload_data)
+    model.fit(training_data)
 
-    data = np.concatenate([workload_data, alternative_data], axis=0)
-    label = np.concatenate([np.zeros(workload_data.shape[0]),
-                            np.ones(alternative_data.shape[0])], axis=0)
+    data = np.concatenate([normal_data, anomaly_data], axis=0)
+    label = np.concatenate([np.zeros(normal_data.shape[0]),
+                            np.ones(anomaly_data.shape[0])], axis=0)
 
     score = model.score(data)
     print(score)
@@ -52,18 +61,18 @@ def main():
 
     print(roc_auc)
 
-    plt.figure()
-    lw = 2
-    plt.plot(fpr, tpr, color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
-    plt.legend(loc="lower right")
-    plt.show()
+    # plt.figure()
+    # lw = 2
+    # plt.plot(fpr, tpr, color='darkorange',
+    #          lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    # plt.xlim([0.0, 1.0])
+    # plt.ylim([0.0, 1.05])
+    # plt.xlabel('False Positive Rate')
+    # plt.ylabel('True Positive Rate')
+    # plt.title('Receiver operating characteristic example')
+    # plt.legend(loc="lower right")
+    # plt.show()
 
 
 if __name__ == '__main__':

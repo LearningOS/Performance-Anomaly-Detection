@@ -29,8 +29,8 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run idle'
-    workload_input = '60\n'
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run compress-gzip'
+    workload_input = ''
 
     workload = run_command(workload_command, workload_input)
     time.sleep(10)
@@ -52,7 +52,7 @@ def main():
     collector.register_parser('system', SystemNetworkStatParser())
     collector.register_parser('system', SystemDiskStatParser())
     collector.register_parser('system', SystemVMStatParser())
-    collector.start(terminal_condition=lambda: cnt > 200)
+    collector.start(terminal_condition=lambda: cnt > 50)
 
     collector.thread.join()
 

@@ -30,8 +30,8 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run video-cpu-usage'
-    workload_input = '1\n'
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run build-linux-kernel'
+    workload_input = ''
 
     fault_commands = [
         'python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data',
