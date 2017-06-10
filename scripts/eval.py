@@ -16,6 +16,7 @@ from perf_anomaly.injector import *
 from perf_anomaly.lof import WindowAdaptiveLOF
 from perf_anomaly.lof import LOFDetector
 from perf_anomaly.gaussian import IndependentGaussianDetector
+from perf_anomaly.gaussian import CorrelationGaussianDetector
 from perf_anomaly.forest import IsolationForestDetector
 from perf_anomaly.svm import OneClassSVMDetector
 
@@ -43,10 +44,10 @@ def main():
     normal_data = normal_df.as_matrix()
     anomaly_data = anomaly_df.as_matrix()
 
-    model = LOFDetector()
-    # model = IsolationForestDetector()
-    # model = OneClassSVMDetector()
     # model = IndependentGaussianDetector()
+    # model = OneClassSVMDetector()
+    # model = IsolationForestDetector()
+    model = LOFDetector()
     model.fit(training_data)
 
     data = np.concatenate([normal_data, anomaly_data], axis=0)
@@ -54,25 +55,24 @@ def main():
                             np.ones(anomaly_data.shape[0])], axis=0)
 
     score = model.score(data)
-    print(score)
 
     fpr, tpr, thresholds = roc_curve(label, score, pos_label=1)
     roc_auc = roc_auc_score(label, score)
 
     print(roc_auc)
 
-    # plt.figure()
-    # lw = 2
-    # plt.plot(fpr, tpr, color='darkorange',
-    #          lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
-    # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    # plt.xlim([0.0, 1.0])
-    # plt.ylim([0.0, 1.05])
-    # plt.xlabel('False Positive Rate')
-    # plt.ylabel('True Positive Rate')
-    # plt.title('Receiver operating characteristic example')
-    # plt.legend(loc="lower right")
-    # plt.show()
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+    plt.show()
 
 
 if __name__ == '__main__':

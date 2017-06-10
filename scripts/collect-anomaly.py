@@ -1,5 +1,6 @@
 import os
 import sys
+import signal
 import argparse
 import subprocess
 import shlex
@@ -11,11 +12,12 @@ from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
 
 
-def run_command(command, stdinput='', shell=True):
+def run_command(command, stdinput=''):
     workload = subprocess.Popen(command,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                shell=shell,
+                                shell=True,
+                                start_new_session=True,
                                 universal_newlines=True,
                                 bufsize=0)
     workload.stdin.write(stdinput)
@@ -30,8 +32,9 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run build-linux-kernel'
-    workload_input = ''
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run pgbench'
+    # workload_command = 'python3 scripts/webbench.py'
+    workload_input = '3\n2\n1\n'
 
     fault_commands = [
         'python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data',
@@ -60,13 +63,13 @@ def main():
     time.sleep(10)
 
     for fault_command in fault_commands:
-        fault = run_command(shlex.split(fault_command), shell=False)
+        fault = run_command(fault_command)
         collector.start(terminal_condition=lambda: cnt > 20, first_run=True)
         collector.thread.join()
-        fault.terminate()
+        os.killpg(os.getpgid(fault.pid), signal.SIGTERM)
         cnt = 0
 
-    workload.terminate()
+    os.killpg(os.getpgid(workload.pid), signal.SIGTERM)
 
     data = pd.concat(dfs, axis=0)  # type: pd.DataFrame
     data.to_pickle(args.out)

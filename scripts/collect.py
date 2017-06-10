@@ -1,5 +1,6 @@
 import os
 import sys
+import signal
 import argparse
 import subprocess
 
@@ -15,6 +16,7 @@ def run_command(command, stdinput=''):
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 shell=True,
+                                start_new_session=True,
                                 universal_newlines=True,
                                 bufsize=0)
     workload.stdin.write(stdinput)
@@ -29,8 +31,9 @@ def main():
 
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run compress-gzip'
-    workload_input = ''
+    workload_command = 'FORCE_TIMES_TO_RUN=10000 phoronix-test-suite batch-run pgbench'
+    # workload_command = 'python3 scripts/webbench.py'
+    workload_input = '3\n2\n1\n'
 
     workload = run_command(workload_command, workload_input)
     time.sleep(10)
@@ -56,7 +59,7 @@ def main():
 
     collector.thread.join()
 
-    workload.terminate()
+    os.killpg(os.getpgid(workload.pid), signal.SIGTERM)
 
     nr_data = len(dfs)
     data = pd.concat(dfs, axis=0)  # type: pd.DataFrame

@@ -12,6 +12,7 @@ from typing import List, Tuple
 
 from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
+from perf_anomaly.lof import LOFDetector
 
 
 def get_pid_by_name(name):
@@ -45,7 +46,7 @@ def main():
 
     nr_data = len(dfs)
     data = pd.concat(dfs, axis=0).as_matrix()  # type: np.array
-    model = LOFDetector(window_size=nr_data)
+    model = LOFDetector()
     # model = IndependentGaussian()
     model.fit(data)
 

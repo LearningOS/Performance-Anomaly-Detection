@@ -57,6 +57,7 @@ list_benchmark = [
     'tensorflow',
     'video-cpu-usage',
     'x264',
+    'nginx.workload'
 ]
 
 
