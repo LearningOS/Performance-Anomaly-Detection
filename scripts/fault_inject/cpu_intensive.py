@@ -8,7 +8,7 @@ def main():
     setproctitle.setproctitle('cpu')
     random.seed(os.urandom(512))
     while True:
-        t = random.random()
+        t = random.random() * 0.2
         print(t)
         for i in range(int(10 / t)):
             time.sleep(t)

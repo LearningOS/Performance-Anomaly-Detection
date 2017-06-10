@@ -41,10 +41,11 @@ def main():
 
     tasks = [
         'python scripts/fault_inject/io_bottleneck.py --dir /data/graduate-project/data',
-        'python scripts/fault_inject/cpu_intensive.py'
+        'python scripts/fault_inject/cpu_intensive.py',
+        'python scripts/fault_inject/network_traffic.py --ip 172.17.0.2'
     ]
 
-    injector = Injector(target=tasks[0])
+    injector = Injector(target=tasks[1])
 
     def collector_callback(df: pd.DataFrame) -> None:
         q.put(df)
