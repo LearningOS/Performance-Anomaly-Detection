@@ -236,6 +236,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         # as bigger is better:
         return -np.mean(lrd_ratios_array, axis=1)
 
+    def decision_function(self, X):
+        return self._decision_function(X)
+
     def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
         The LRD of a sample is the inverse of the average reachability

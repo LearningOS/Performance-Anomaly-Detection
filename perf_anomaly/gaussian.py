@@ -22,6 +22,9 @@ class IndependentGaussianDetector(object):
     def predict(self, X: np.ndarray):
         return self.score(X) > 3
 
+    def decision_function(self, X):
+        return self.score(X)
+
     def score(self, X: np.ndarray):
         X_scaled = self._scaler.transform(X)
         return np.mean(np.square(X_scaled), axis=1)

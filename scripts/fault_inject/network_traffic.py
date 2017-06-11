@@ -18,7 +18,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     while True:
-        time.sleep(0.1)
+        time.sleep(0.01)
         for i in range(100):
             sock.sendto(str(random.getrandbits(128)).encode('utf-8'), (args.ip, 22))
 

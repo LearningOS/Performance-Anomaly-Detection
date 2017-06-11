@@ -12,14 +12,74 @@ from perf_anomaly.analyzer import *
 
 
 tasks = {
-    'pgbench': (
-        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run pgbench',
-        '3\n2\n1\n'
+    'blender': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run blender',
+        '1\n2\n'
     ),
     'build-linux-kernel': (
         'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run build-linux-kernel',
         ''
-    )
+    ),
+    'compress-gzip': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run compress-gzip',
+        ''
+    ),
+    'idle': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run idle',
+        '1\n'
+    ),
+    'mcperf.set': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run mcperf',
+        '2\n'
+    ),
+    'n-queens': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run n-queens',
+        ''
+    ),
+    'nginx': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run nginx',
+        ''
+    ),
+    'pgbench': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run pgbench',
+        '3\n2\n1\n'
+    ),
+    'redis.set': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run redis',
+        '1\n'
+    ),
+    'sample-program': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run sample-program',
+        ''
+    ),
+    'scikit-learn': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run scikit-learn',
+        ''
+    ),
+    'smallpt': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run smallpt',
+        ''
+    ),
+    'sqlite': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run sqlite',
+        ''
+    ),
+    'tensorflow': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run tensorflow',
+        ''
+    ),
+    'video-cpu-usage': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run video-cpu-usage',
+        '1\n'
+    ),
+    'x264': (
+        'FORCE_TIMES_TO_RUN=100000 phoronix-test-suite batch-run x264',
+        ''
+    ),
+    'nginx.workload': (
+        'python scripts/workload/webbench.py',
+        ''
+    ),
 }
 
 
@@ -83,20 +143,34 @@ def collect_task(taskname, nr_time, outfile, inject=False):
 
 
 def main():
-    # parser = argparse.ArgumentParser(description='')
-    # parser.add_argument('--out', type=str, required=True,
-    #                     help='the output path')
-    # args = parser.parse_args()
-
     os.system('echo 3 > /proc/sys/vm/drop_caches')
 
-    taskname = 'build-linux-kernel'
-
-    collect_task(taskname, 1000, os.path.join('log', taskname + '.data.pkl'))
-    time.sleep(60)
-    collect_task(taskname, 300, os.path.join('log', taskname + '.normal.pkl'))
-    time.sleep(60)
-    collect_task(taskname, 100, os.path.join('log', taskname + '.anomaly.pkl', inject=True))
+    tasknames = [
+        'blender',
+        'build-linux-kernel',
+        'compress-gzip',
+        'idle',
+        'mcperf.set',
+        'n-queens',
+        'nginx',
+        'pgbench',
+        'redis.set',
+        'sample-program',
+        'scikit-learn',
+        'smallpt',
+        'sqlite',
+        'tensorflow',
+        'video-cpu-usage',
+        'x264',
+        'nginx.workload'
+    ]
+    for taskname in ['nginx', 'mcperf.set', 'redis.set', 'nginx.workload']:
+        # collect_task(taskname, 200, os.path.join('log', taskname + '.data.pkl'))
+        # time.sleep(60)
+        # collect_task(taskname, 50, os.path.join('log', taskname + '.normal.pkl'))
+        # time.sleep(60)
+        collect_task(taskname, 20, os.path.join('log', taskname + '.anomaly.pkl'), inject=True)
+        time.sleep(60)
 
 if __name__ == '__main__':
     main()

@@ -14,7 +14,7 @@ from perf_anomaly.data import *
 from perf_anomaly.analyzer import *
 from perf_anomaly.injector import *
 from perf_anomaly.lof import WindowAdaptiveLOF
-from perf_anomaly.lof import LOFDetector
+from perf_anomaly.lrd import LRDDetector
 from perf_anomaly.gaussian import IndependentGaussianDetector
 from perf_anomaly.gaussian import CorrelationGaussianDetector
 from perf_anomaly.forest import IsolationForestDetector

@@ -21,6 +21,7 @@ def eval_auc(data_file, normal_file, anomaly_file):
     training_data = training_df.as_matrix()
     normal_data = normal_df.as_matrix()
     anomaly_data = anomaly_df.as_matrix()
+    # anomaly_data = anomaly_data[40:]
 
     model = LOFDetector()
     # model = IsolationForestDetector()
@@ -43,7 +44,6 @@ list_benchmark = [
     'blender',
     'build-linux-kernel',
     'compress-gzip',
-    'ffmpeg',
     'idle',
     'mcperf.set',
     'n-queens',
@@ -62,10 +62,12 @@ list_benchmark = [
 
 
 def main():
+    base_dir = 'log'
+
     def auc(bench_name):
-        data_file = os.path.join('log', bench_name + '.data.pkl')
-        normal_file = os.path.join('log', bench_name + '.normal.pkl')
-        anomaly_file = os.path.join('log', bench_name + '.anomaly.pkl')
+        data_file = os.path.join(base_dir, bench_name + '.data.pkl')
+        normal_file = os.path.join(base_dir, bench_name + '.normal.pkl')
+        anomaly_file = os.path.join(base_dir, bench_name + '.anomaly.pkl')
         return eval_auc(data_file, normal_file, anomaly_file)
 
     result = [(name, auc(name)) for name in list_benchmark]
