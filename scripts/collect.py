@@ -164,11 +164,11 @@ def main():
         'x264',
         'nginx.workload'
     ]
-    for taskname in ['nginx', 'mcperf.set', 'redis.set', 'nginx.workload']:
-        # collect_task(taskname, 200, os.path.join('log', taskname + '.data.pkl'))
-        # time.sleep(60)
-        # collect_task(taskname, 50, os.path.join('log', taskname + '.normal.pkl'))
-        # time.sleep(60)
+    for taskname in tasknames:
+        collect_task(taskname, 200, os.path.join('log', taskname + '.data.pkl'))
+        time.sleep(60)
+        collect_task(taskname, 50, os.path.join('log', taskname + '.normal.pkl'))
+        time.sleep(60)
         collect_task(taskname, 20, os.path.join('log', taskname + '.anomaly.pkl'), inject=True)
         time.sleep(60)
 

@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from perf_anomaly.lof import LOFDetector
+from perf_anomaly.lrd import LRDDetector
 from perf_anomaly.gaussian import IndependentGaussianDetector
 from perf_anomaly.forest import IsolationForestDetector
 from perf_anomaly.svm import OneClassSVMDetector
@@ -21,7 +22,6 @@ def eval_auc(data_file, normal_file, anomaly_file):
     training_data = training_df.as_matrix()
     normal_data = normal_df.as_matrix()
     anomaly_data = anomaly_df.as_matrix()
-    # anomaly_data = anomaly_data[40:]
 
     model = LOFDetector()
     # model = IsolationForestDetector()
